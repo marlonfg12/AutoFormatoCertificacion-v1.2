@@ -10,7 +10,7 @@ Este proyecto automatiza la generación y diligenciamiento de los informes ofici
 El flujo de interacción exacto con Azure DevOps opera así:
 
 1. **Apertura de la Suite:**
-   * El usuario ingresa la URL directa de la suite de la HU en la vista **Execute** (ejemplo: `https://dev.azure.com/interrapidisimo/PL%20-%20Portal%20Clientes/_testPlans/execute?planId=420777&suiteId=428930`).
+   * El usuario ingresa la URL directa de la suite de la HU en la vista **Execute** (ejemplo: `https://dev.azure.com/interrapidisimo/{Proyecto}/_testPlans/execute?planId=123456&suiteId=789012`).
    * Se inicia el navegador con sesión persistente (`.browser-session`).
 2. **Lectura de la HU y Casos:**
    * Se extrae el nombre e ID de la HU desde la cabecera.
@@ -41,7 +41,7 @@ npm start
 ```
 O pasando la URL como argumento:
 ```bash
-npm start "https://dev.azure.com/interrapidisimo/PL%20-%20Portal%20Clientes/_testPlans/execute?planId=420777&suiteId=428930"
+npm start "https://dev.azure.com/interrapidisimo/{Proyecto}/_testPlans/execute?planId=123456&suiteId=789012"
 ```
 
 ### Modos de extracción
