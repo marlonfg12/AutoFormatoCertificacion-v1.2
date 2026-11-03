@@ -47,6 +47,7 @@ npm start "https://dev.azure.com/interrapidisimo/PL%20-%20Portal%20Clientes/_tes
 ### Modos de extracción
 
 * **API REST (por defecto):** el inicio de sesión sigue siendo manual y se guarda en `.browser-session`. Con esa misma sesión se consultan las APIs oficiales de Azure DevOps (`testplan` / `test`) para obtener la HU, los casos, el último resultado y **descargar los adjuntos (evidencias)** directamente, sin clics en la interfaz. Implementado en `src/azure-api-extractor.ts`.
+* **Evidencias en PDF:** si el adjunto es un PDF (o un ZIP que lo contiene), cada página se convierte en imagen PNG completa (`src/pdf-renderer.ts`, con `pdfjs-dist`) y se inserta en el Word como una evidencia más. Las páginas totalmente en blanco se omiten.
 * **Interfaz web (respaldo):** si la API falla, se ejecuta automáticamente el flujo anterior con Playwright (`src/azure-extractor.ts`). Para forzarlo:
 ```bash
 npm start -- "<URL de la suite>" --ui

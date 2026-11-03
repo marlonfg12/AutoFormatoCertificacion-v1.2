@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import AdmZip from 'adm-zip';
 import { UserStoryContext, ScenarioEvidence, DocumentMetadata } from './types';
+import { isPdf, savePdfAsImages } from './pdf-renderer';
 
 export class AzureExtractor {
   constructor(private page: Page) {}
@@ -424,6 +425,16 @@ export class AzureExtractor {
           const isJpg = buf.length > 2 && buf[0] === 0xFF && buf[1] === 0xD8;
           if (isPng || isJpg) {
             validImages.push(fullPath);
+          } else if (isPdf(buf)) {
+            // Evidencias en PDF: convertir cada página en imagen
+            console.log(`  Convirtiendo PDF a imágenes: ${file}`);
+            try {
+              const pages = await savePdfAsImages(buf, file, downloadDir);
+              validImages.push(...pages);
+            } catch (e: any) {
+              console.warn(`  ⚠ No se pudo convertir el PDF "${file}": ${e.message}`);
+            }
+            fs.unlinkSync(fullPath);
           } else {
             // Eliminar archivos espurios / HTML
             fs.unlinkSync(fullPath);

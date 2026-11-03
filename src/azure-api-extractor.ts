@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import AdmZip from 'adm-zip';
 import { UserStoryContext, ScenarioEvidence, DocumentMetadata } from './types';
+import { isPdf, savePdfAsImages } from './pdf-renderer';
 
 /**
  * Extractor basado en la API REST oficial de Azure DevOps (Test Plans / Test Results).
@@ -46,7 +47,7 @@ interface AttachmentRef {
 
 const API_VERSION = '7.1';
 const MAX_PARALLEL_DOWNLOADS = 4;
-const DOWNLOADABLE_EXT = /\.(png|jpe?g|zip)$/i;
+const DOWNLOADABLE_EXT = /\.(png|jpe?g|zip|pdf)$/i;
 
 export class AzureApiExtractor {
   private info: SuiteUrlInfo;
@@ -387,7 +388,7 @@ export class AzureApiExtractor {
           if (res.status >= 400 || res.contentType.includes('text/html')) {
             throw new Error(`HTTP ${res.status}`);
           }
-          savedPerAttachment[index] = this.saveAttachment(att, res.body, targetDir, usedNames);
+          savedPerAttachment[index] = await this.saveAttachment(att, res.body, targetDir, usedNames);
         } catch (e: any) {
           console.warn(`  ⚠ No se pudo descargar el adjunto "${att.fileName}": ${e.message}`);
         }
@@ -401,9 +402,10 @@ export class AzureApiExtractor {
   }
 
   /**
-   * Guarda el binario; si es ZIP extrae las imágenes. Solo conserva PNG/JPEG reales.
+   * Guarda el binario: imágenes PNG/JPEG tal cual, PDF convertido a una imagen por
+   * página, y ZIP descomprimido (procesando sus imágenes y PDF internos).
    */
-  private saveAttachment(att: AttachmentRef, body: Buffer, targetDir: string, usedNames: Set<string>): string[] {
+  private async saveAttachment(att: AttachmentRef, body: Buffer, targetDir: string, usedNames: Set<string>): Promise<string[]> {
     const saved: string[] = [];
 
     if (this.isZip(body)) {
@@ -413,15 +415,33 @@ export class AzureApiExtractor {
         const data = entry.getData();
         if (this.isImage(data)) {
           saved.push(this.writeUnique(targetDir, path.basename(entry.entryName), data, usedNames));
+        } else if (isPdf(data)) {
+          saved.push(...(await this.savePdf(path.basename(entry.entryName), data, targetDir)));
         }
       }
       return saved;
+    }
+
+    if (isPdf(body)) {
+      return this.savePdf(att.fileName, body, targetDir);
     }
 
     if (this.isImage(body)) {
       saved.push(this.writeUnique(targetDir, att.fileName, body, usedNames));
     }
     return saved;
+  }
+
+  private async savePdf(fileName: string, data: Buffer, targetDir: string): Promise<string[]> {
+    console.log(`  Convirtiendo PDF a imágenes: ${fileName}`);
+    try {
+      const pages = await savePdfAsImages(data, fileName, targetDir);
+      console.log(`  ✔ ${pages.length} página(s) del PDF convertidas en evidencia.`);
+      return pages;
+    } catch (e: any) {
+      console.warn(`  ⚠ No se pudo convertir el PDF "${fileName}": ${e.message}`);
+      return [];
+    }
   }
 
   private writeUnique(dir: string, fileName: string, data: Buffer, usedNames: Set<string>): string {
