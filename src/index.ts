@@ -14,7 +14,7 @@ function promptUser(query: string): Promise<string> {
 
 async function main() {
   console.log('\n\x1b[35m==============================================================\x1b[0m');
-  console.log('\x1b[1m\x1b[35m  AUTOMATIZADOR DE FORMATO GTE-ASF-R-01 (INTER RAPIDÍSIMO)   \x1b[0m');
+  console.log('\x1b[1m\x1b[35m   AUTOMATIZADOR DE INFORMES DE PRUEBAS (AZURE TEST PLANS)   \x1b[0m');
   console.log('\x1b[35m==============================================================\x1b[0m\n');
 
   // 1. Obtener la URL de la HU
@@ -23,7 +23,7 @@ async function main() {
   let huUrl = process.argv.slice(2).find((a) => a.startsWith('http')) || '';
   if (!huUrl) {
     console.log('\x1b[33mPor favor ingresa la URL de la suite de la HU (Execute):\x1b[0m');
-    console.log('\x1b[90m(Ejemplo: https://dev.azure.com/interrapidisimo/PL%20-%20Portal%20Clientes/_testPlans/execute?planId=420777&suiteId=428930)\x1b[0m\n');
+    console.log('\x1b[90m(Ejemplo: https://dev.azure.com/{organizacion}/{proyecto}/_testPlans/execute?planId=123456&suiteId=789012)\x1b[0m\n');
     huUrl = await promptUser('URL de la HU > ');
   }
 

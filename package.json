@@ -1,7 +1,7 @@
 {
-  "name": "auto-portal-qa",
-  "version": "1.0.0",
-  "description": "Automatización del formato oficial GTE-ASF-R-01 desde Azure Test Plans",
+  "name": "azure-devops-test-reporter",
+  "version": "1.2.0",
+  "description": "Extractor automatizado de evidencias de Azure Test Plans y generador oficial de informes de pruebas en formato Word",
   "main": "dist/index.js",
   "scripts": {
     "start": "tsx src/index.ts",

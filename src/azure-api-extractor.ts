@@ -206,19 +206,19 @@ export class AzureApiExtractor {
     const sprint = this.extractSprint(plan?.iteration);
 
     const metadata: DocumentMetadata = {
-      projectName: this.info.projectName,
-      projectId: this.info.projectName,
-      sprint: sprint || 'Sprint Actual',
-      requester: 'Líder Técnico QA - Inter Rapidísimo',
-      module: 'Portal Clientes - Web',
-      testStage: 'QA / Pruebas Funcionales',
-      testingArea: 'TECNOLOGÍA / ARQUITECTURA TI',
+      projectName: this.info.projectName || process.env.QA_PROJECT_NAME || 'Proyecto Principal',
+      projectId: this.info.projectName || process.env.QA_PROJECT_NAME || 'Proyecto Principal',
+      sprint: sprint || process.env.DEFAULT_SPRINT || 'Sprint Actual',
+      requester: process.env.QA_REQUESTER || 'Líder Técnico QA',
+      module: process.env.QA_MODULE || 'Módulo Principal',
+      testStage: process.env.QA_TEST_STAGE || 'QA / Pruebas Funcionales',
+      testingArea: process.env.QA_TESTING_AREA || 'TECNOLOGÍA / ASEGURAMIENTO DE CALIDAD',
       startDate: validDates.length ? validDates[0].toLocaleDateString('es-CO') : today,
       endDate: validDates.length ? validDates[validDates.length - 1].toLocaleDateString('es-CO') : today,
-      environment: 'QA Staging Inter Rapidísimo',
-      testType: 'Funcional / E2E',
+      environment: process.env.QA_ENVIRONMENT || 'QA Staging',
+      testType: process.env.QA_TEST_TYPE || 'Funcional / E2E',
       urlOrVersion: this.suiteUrl,
-      observations: 'Pruebas ejecutadas y validadas conforme a la definición de terminado.',
+      observations: process.env.QA_OBSERVATIONS || 'Pruebas ejecutadas y validadas conforme a la definición de terminado.',
     };
 
     return { hu, metadata };

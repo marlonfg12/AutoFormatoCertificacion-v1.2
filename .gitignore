@@ -6,4 +6,5 @@ output/
 *.log
 .env
 ~$*.docx
+*.docx
 

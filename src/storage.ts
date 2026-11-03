@@ -91,13 +91,13 @@ export function resolveHuFolder(baseDir: string, huId: string, huName: string): 
         const folderName = entry.name;
         const normFolder = normalizeForMatch(folderName);
 
-        // Coincidencia por ID (ej: "406158 - ...", "HU 406158", "406158_...")
+        // Coincidencia por ID (ej: "10101 - ...", "HU 10101", "10101_...")
         if (normId && normFolder.includes(normId)) {
           console.log(`\x1b[36m[Carpeta HU]\x1b[0m Reutilizando carpeta existente: \x1b[1m${folderName}\x1b[0m`);
           return path.join(baseDir, folderName);
         }
 
-        // Coincidencia por nombre (ej: "Estabilizacion 7")
+        // Coincidencia por nombre (ej: "Suite Regresion")
         if (normName && normName.length > 5 && normFolder.includes(normName)) {
           console.log(`\x1b[36m[Carpeta HU]\x1b[0m Reutilizando carpeta existente: \x1b[1m${folderName}\x1b[0m`);
           return path.join(baseDir, folderName);

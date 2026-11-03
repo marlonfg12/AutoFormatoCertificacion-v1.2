@@ -1,69 +1,113 @@
-# Automatización de Diligenciamiento de Formato de Pruebas (GTE-ASF-R-01) desde Azure Test Plans
+# 🚀 Azure DevOps Test Reporter
 
-## 1. Visión General del Proyecto
-Este proyecto automatiza la generación y diligenciamiento de los informes oficiales de resultados de pruebas (**GTE-ASF-R-01 Resultado de Pruebas V7**) de Inter Rapidísimo S.A. a partir de las suites de prueba de cada Historia de Usuario en **Azure DevOps (Test Plans)**.
+> Herramienta automatizada de alto rendimiento para extraer casos de prueba, resultados y evidencias desde **Azure DevOps (Test Plans)** y compilar informes oficiales de certificación de pruebas en formato **Microsoft Word (.docx)**.
 
----
-
-## 2. Flujo de Navegación Validado por Playwright
-
-El flujo de interacción exacto con Azure DevOps opera así:
-
-1. **Apertura de la Suite:**
-   * El usuario ingresa la URL directa de la suite de la HU en la vista **Execute** (ejemplo: `https://dev.azure.com/interrapidisimo/PL%20-%20Portal%20Clientes/_testPlans/execute?planId=420777&suiteId=428930`).
-   * Se inicia el navegador con sesión persistente (`.browser-session`).
-2. **Lectura de la HU y Casos:**
-   * Se extrae el nombre e ID de la HU desde la cabecera.
-   * Se listan todos los Casos de Prueba (Test Points) de la tabla central.
-3. **Apertura del Test Run (Ventana Popup):**
-   * Para cada caso, se realiza doble clic sobre la fila.
-   * Se abre el panel lateral `dialog` (`execution history`).
-   * Se hace clic en el estado o corrida (`Passed` / `Failed`).
-   * **Azure DevOps abre la ejecución en una ventana emergente (popup / nueva pestaña).**
-4. **Extracción de Evidencias en la Pestaña `Attachments`:**
-   * En la ventana emergente de la corrida, se hace clic en la pestaña **`Attachments`**.
-   * Se descargan directamente todas las capturas de pantalla registradas (`Screenshot_....png`).
-   * Se cierra la ventana emergente de la corrida.
-   * Se cierra el diálogo lateral con `Escape` y se pasa al siguiente caso.
-5. **Diligenciamiento del Informe Word:**
-   * Se clonan dinámicamente las tablas institucionales por cada escenario.
-   * Se insertan las capturas redimensionadas en el recuadro `Ejecución HU`.
-   * Se calculan los totales y se exporta el informe oficial en `./output/`.
+[![Node.js Version](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Playwright](https://img.shields.io/badge/Playwright-1.49-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/)
+[![Azure DevOps](https://img.shields.io/badge/Azure_DevOps-REST_API_7.1-0078D7?logo=azure-devops&logoColor=white)](https://learn.microsoft.com/rest/api/azure/devops/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
 
-## 3. Instrucciones de Uso
+## 📋 Características Principales
 
-Para ejecutar el flujo automatizado:
+* ⚡ **Extracción Híbrida Inteligente:**
+  * **Modo API REST 7.1 (Principal):** Extracción directa y descarga paralela de evidencias en segundos sin interactuar con la interfaz gráfica.
+  * **Modo Playwright (Respaldo Automático):** Emulación de navegación para entornos donde las políticas de red bloquean APIs directas.
+* 🔐 **Autenticación SSO sin Secretos:** Reutiliza la sesión corporativa del navegador (`.browser-session`) sin almacenar tokens PAT ni contraseñas.
+* 🖼️ **Motor Adaptativo de Evidencias:**
+  * **Capturas de pantalla (PNG / JPEG):** Ajuste proporcional automático al ancho útil de la celda de la tabla sin recortes ni deformaciones.
+  * **Documentos PDF:** Conversión automática página por página a imágenes de alta definición con escala adaptativa de altura.
+  * **Paquetes ZIP:** Descompresión recursiva en memoria para extraer capturas o PDFs contenidos.
+* 📊 **Manejo de Estados y Alertas:**
+  * Escenarios **Aprobados** y **Fallidos** documentados con sus capturas.
+  * Alerta visual en consola al finalizar con los IDs de casos con fallo.
+  * Escenarios en **No Aplica** consolidados automáticamente en el cuadro resumen final.
+* ☁️ **Organización Inteligente en la Nube:**
+  * Compatible con carpetas compartidas de **Google Drive**, OneDrive o red local.
+  * Detección y reutilización automática de carpetas existentes por Historia de Usuario (o creación automática si no existen).
 
+---
+
+## 🚀 Inicio Rápido
+
+### 1. Clonar el repositorio e instalar dependencias
+```bash
+git clone https://github.com/tu-usuario/azure-devops-test-reporter.git
+cd azure-devops-test-reporter
+npm install
+```
+
+### 2. Configurar variables de entorno
+Copia la plantilla de configuración:
+```bash
+cp .env.example .env
+```
+Edita `.env` para personalizar la ruta de salida (ej: tu carpeta sincronizada de Google Drive) y los metadatos de tu equipo:
+```env
+OUTPUT_PATH="G:\Mi unidad\Informes_QA"
+REPORT_PREFIX="Informe_Certificacion"
+QA_REQUESTER="Líder Técnico de QA"
+```
+
+### 3. Configurar tu Plantilla Word
+Coloca tu archivo de formato institucional `.docx` en la raíz del proyecto con el nombre:
+```text
+plantilla_resultado_pruebas.docx
+```
+*(O define la ruta personalizada en `.env` mediante `TEMPLATE_PATH="/ruta/a/tu/plantilla.docx"`).*
+
+---
+
+## 💻 Uso
+
+Ejecuta el proyecto con la URL de la suite en la vista **Execute** de Azure Test Plans:
+
+```bash
+npm start "https://dev.azure.com/{organizacion}/{proyecto}/_testPlans/execute?planId=12345&suiteId=67890"
+```
+
+O simplemente ejecuta `npm start` y el asistente CLI te solicitará la URL por consola:
 ```bash
 npm start
 ```
-O pasando la URL como argumento:
-```bash
-npm start "https://dev.azure.com/interrapidisimo/PL%20-%20Portal%20Clientes/_testPlans/execute?planId=420777&suiteId=428930"
-```
 
-### Modos de extracción
-
-* **API REST (por defecto):** el inicio de sesión sigue siendo manual y se guarda en `.browser-session`. Con esa misma sesión se consultan las APIs oficiales de Azure DevOps (`testplan` / `test`) para obtener la HU, los casos, el último resultado y **descargar los adjuntos (evidencias)** directamente, sin clics en la interfaz. Implementado en `src/azure-api-extractor.ts`.
-* **Evidencias en PDF:** si el adjunto es un PDF (o un ZIP que lo contiene), cada página se convierte en imagen PNG completa (`src/pdf-renderer.ts`, con `pdfjs-dist`) y se inserta en el Word como una evidencia más. Las páginas totalmente en blanco se omiten.
-* **Interfaz web (respaldo):** si la API falla, se ejecuta automáticamente el flujo anterior con Playwright (`src/azure-extractor.ts`). Para forzarlo:
+### Forzar Modo Interfaz (Playwright)
+Si necesitas forzar la navegación visual en lugar de la API:
 ```bash
-npm start -- "<URL de la suite>" --ui
+npm start -- "<URL_DE_LA_SUITE>" --ui
 ```
 
 ---
 
-## 4. Almacenamiento Centralizado en Google Drive
+## 📂 Estructura del Proyecto
 
-Los formatos generados se organizan automáticamente en subcarpetas por Historia de Usuario (HU).
+```text
+├── src/
+│   ├── azure-api-extractor.ts   # Conexión REST API v7.1 con sesión de navegador
+│   ├── azure-extractor.ts       # Extractor de respaldo por interfaz Playwright
+│   ├── browser.ts               # Contexto persistente de navegador (.browser-session)
+│   ├── pdf-renderer.ts          # Renderizador de PDF a PNG (pdfjs-dist + Canvas)
+│   ├── storage.ts               # Gestor de carpetas por HU y soporte de Google Drive
+│   ├── word-engine.ts           # Inyector OpenXML con DrawingML
+│   ├── types.ts                 # Interfaces y tipos de TypeScript
+│   └── index.ts                 # Orquestador y punto de entrada CLI
+├── .env.example                 # Plantilla de configuración de entorno
+├── GUIA_INICIO_RAPIDO.md        # Manual detallado de configuración paso a paso
+├── ARCHITECTURE.md              # Documentación técnica de arquitectura
+└── package.json                 # Dependencias y scripts del proyecto
+```
 
-1. **Configuración de ruta compartida:**
-   Crea o edita el archivo `.env` en la raíz del proyecto (puedes tomar como referencia `.env.example`):
-   ```env
-   OUTPUT_PATH="G:\Mi unidad\AutoFormatoCertificacion-v1.2"
-   ```
-   * Si la ruta está disponible, guardará directamente en esa unidad compartida.
-   * Si la unidad de Google Drive no está montada o la ruta no existe, el sistema guardará automáticamente en `./output` local como respaldo seguro sin detener el flujo.
-   * **Organización automática por HU:** Si ya existe una carpeta para la HU (por ejemplo `"Estabilizacion 7"` o `"406158 - ..."`), guarda el documento Word dentro de ella. Si no existe, crea automáticamente la subcarpeta para esa HU.
+---
+
+## 📖 Documentación Adicional
+
+* 📘 [Guía de Inicio Rápido desde Cero](GUIA_INICIO_RAPIDO.md)
+* 📐 [Documentación de Arquitectura y Flujos](ARCHITECTURE.md)
+
+---
+
+## 📄 Licencia
+
+Distribuido bajo la Licencia **MIT**. Consulta el archivo `LICENSE` para más información.

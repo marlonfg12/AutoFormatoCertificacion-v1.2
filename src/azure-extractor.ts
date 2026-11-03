@@ -54,7 +54,7 @@ export class AzureExtractor {
     console.log('\x1b[34m[Paso 2]\x1b[0m Leyendo información de la Historia de Usuario...');
 
     const currentUrl = this.page.url();
-    let projectName = 'Portal Clientes';
+    let projectName = process.env.QA_PROJECT_NAME || 'Proyecto Principal';
     const projectMatch = currentUrl.match(/(?:dev\.azure\.com\/[^/]+\/|visualstudio\.com\/)([^/?#]+)/i);
     if (projectMatch && projectMatch[1]) {
       projectName = decodeURIComponent(projectMatch[1]);
@@ -104,17 +104,17 @@ export class AzureExtractor {
     const metadata: DocumentMetadata = {
       projectName,
       projectId: projectName,
-      sprint: 'Sprint Actual',
-      requester: 'Líder Técnico QA - Inter Rapidísimo',
-      module: 'Portal Clientes - Web',
-      testStage: 'QA / Pruebas Funcionales',
-      testingArea: 'TECNOLOGÍA / ARQUITECTURA TI',
+      sprint: process.env.DEFAULT_SPRINT || 'Sprint Actual',
+      requester: process.env.QA_REQUESTER || 'Líder Técnico QA',
+      module: process.env.QA_MODULE || 'Módulo Principal',
+      testStage: process.env.QA_TEST_STAGE || 'QA / Pruebas Funcionales',
+      testingArea: process.env.QA_TESTING_AREA || 'TECNOLOGÍA / ASEGURAMIENTO DE CALIDAD',
       startDate: new Date().toLocaleDateString('es-CO'),
       endDate: new Date().toLocaleDateString('es-CO'),
-      environment: 'QA Staging Inter Rapidísimo',
-      testType: 'Funcional / E2E',
+      environment: process.env.QA_ENVIRONMENT || 'QA Staging',
+      testType: process.env.QA_TEST_TYPE || 'Funcional / E2E',
       urlOrVersion: currentUrl,
-      observations: 'Pruebas ejecutadas y validadas conforme a la definición de terminado.',
+      observations: process.env.QA_OBSERVATIONS || 'Pruebas ejecutadas y validadas conforme a la definición de terminado.',
     };
 
     return { hu, metadata };

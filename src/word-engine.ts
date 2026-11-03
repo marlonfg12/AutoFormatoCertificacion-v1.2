@@ -6,16 +6,41 @@ import { UserStoryContext, DocumentMetadata } from './types';
 import { isPdfPageImage } from './pdf-renderer';
 
 export class WordEngine {
-  private static templatePath = path.resolve(process.cwd(), 'Copia de GTE-ASF-R-01 Resultado de Pruebas V7.docx');
-  // Ancho útil de la celda de evidencias: columna de 6681 dxa menos márgenes de celda (108 dxa x 2)
-  // del estilo de tabla "aa" de la plantilla. 1 dxa = 635 EMU. Se deja un pequeño margen de seguridad
-  // para que Word nunca recorte la imagen por la derecha.
   private static evidenceCellWidthDxa = 6681 - 108 * 2;
   private static maxImageWidthEmu = this.evidenceCellWidthDxa * 635 - 60000; // ~11.2 cm
   private static maxImageHeightEmu = 3600000; // ~10 cm
-  // Páginas convertidas desde PDF: se permite más altura para que ocupen todo el ancho de la celda
-  // (una página carta a 11.2 cm de ancho mide ~14.5 cm de alto). Sin recortes, proporción intacta.
   private static maxPdfPageHeightEmu = 5600000; // ~15.5 cm
+
+  /**
+   * Resuelve la ruta del archivo de plantilla .docx.
+   * Busca en TEMPLATE_PATH (.env) o en nombres estándar en la raíz.
+   */
+  public static getTemplatePath(): string {
+    const configured = process.env.TEMPLATE_PATH;
+    if (configured && fs.existsSync(configured)) {
+      return path.resolve(configured);
+    }
+
+    const defaultNames = [
+      'plantilla_resultado_pruebas.docx',
+      'template.docx',
+      'Formato_Resultado_Pruebas.docx',
+    ];
+
+    for (const name of defaultNames) {
+      const candidate = path.resolve(process.cwd(), name);
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+
+    throw new Error(
+      'Plantilla base no encontrada.\n' +
+      'Por favor coloca tu archivo .docx en la raíz del proyecto como "plantilla_resultado_pruebas.docx" ' +
+      'o define la variable TEMPLATE_PATH en tu archivo .env.\n' +
+      'Consulta detalles en GUIA_INICIO_RAPIDO.md.'
+    );
+  }
 
   static async generateDocument(
     hu: UserStoryContext,
@@ -26,17 +51,15 @@ export class WordEngine {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
+    const prefix = process.env.REPORT_PREFIX || 'Resultado_Pruebas';
     const safeName = `${hu.id}_${hu.name}`.replace(/[\\/:*?"<>|]/g, '_').trim().substring(0, 60);
-    const fileName = `GTE-ASF-R-01_Resultado_Pruebas_${safeName}.docx`;
+    const fileName = `${prefix}_${safeName}.docx`;
     const outputPath = path.join(outputDir, fileName);
 
+    const templatePath = this.getTemplatePath();
     console.log(`\x1b[34m[Paso 4]\x1b[0m Diligenciando plantilla oficial Word para: \x1b[1m${hu.fullName}\x1b[0m...`);
 
-    if (!fs.existsSync(this.templatePath)) {
-      throw new Error(`Plantilla base no encontrada en: ${this.templatePath}`);
-    }
-
-    const zip = new AdmZip(this.templatePath);
+    const zip = new AdmZip(templatePath);
     const docEntry = zip.getEntry('word/document.xml');
     const relsEntry = zip.getEntry('word/_rels/document.xml.rels');
 
@@ -201,7 +224,7 @@ export class WordEngine {
     } catch (err: any) {
       if (err && (err.code === 'EBUSY' || err.message?.includes('busy') || err.message?.includes('locked'))) {
         const timeSuffix = new Date().toISOString().replace(/[:.]/g, '-').substring(11, 19);
-        const altFile = `GTE-ASF-R-01_Resultado_Pruebas_${safeName}_${timeSuffix}.docx`;
+        const altFile = `${prefix}_${safeName}_${timeSuffix}.docx`;
         finalPath = path.join(outputDir, altFile);
         console.warn(`\x1b[33m[Aviso]\x1b[0m El archivo original está abierto en Word. Guardando como: ${altFile}`);
         zip.writeZip(finalPath);
