@@ -212,9 +212,9 @@ export class AzureExtractor {
         continue;
       }
 
-      // No Aplica / Fallida no se incluyen en el documento: no se descargan evidencias
-      if (outcome === 'No Aplica' || outcome === 'Fallida') {
-        console.log(`  ℹ Escenario en estado ${outcome}: no se incluirá en el documento (sin descarga de evidencias).`);
+      // No Aplica no se incluye como tabla en el documento: no se descargan evidencias
+      if (outcome === 'No Aplica') {
+        console.log(`  ℹ Escenario en estado No Aplica: no se incluirá como tabla en el documento (se lista al final).`);
         scenarioList.push(scenario);
         continue;
       }

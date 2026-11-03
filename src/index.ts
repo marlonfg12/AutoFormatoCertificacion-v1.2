@@ -5,6 +5,7 @@ import { AzureExtractor } from './azure-extractor';
 import { AzureApiExtractor } from './azure-api-extractor';
 import { WordEngine } from './word-engine';
 import { UserStoryContext, DocumentMetadata } from './types';
+import { resolveBaseOutputDir, resolveHuFolder } from './storage';
 
 function promptUser(query: string): Promise<string> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -32,7 +33,7 @@ async function main() {
   }
 
   const tempDir = path.resolve(process.cwd(), '.temp');
-  const outputDir = path.resolve(process.cwd(), 'output');
+  const baseOutputDir = resolveBaseOutputDir();
   const startTime = Date.now();
 
   try {
@@ -72,35 +73,39 @@ async function main() {
       hu.passedScenarios = scenarios.filter((s) => s.outcome.toLowerCase().includes('exit') || s.outcome.toLowerCase().includes('pass')).length;
     }
 
-    // 5. Filtrar escenarios: "No Aplica" y "Fallida" no se incluyen como tablas en el documento.
-    //    Los "No Aplica" se listan en el resumen final; los fallidos solo se alertan en consola.
+    // 5. Filtrar escenarios: "No Aplica" no se incluye como tabla en el documento (se lista al final).
+    //    Los "Fallidos" SÍ se incluyen en el documento, pero se emite una alerta destacada en consola.
     const isOutcome = (s: { outcome: string }, ...values: string[]) =>
       values.some((v) => s.outcome.toLowerCase().includes(v));
     const notApplicable = hu.scenarios.filter((s) => isOutcome(s, 'no aplica', 'not applicable'));
     const failed = hu.scenarios.filter((s) => isOutcome(s, 'fallida', 'failed'));
-    const included = hu.scenarios.filter((s) => !notApplicable.includes(s) && !failed.includes(s));
+    const included = hu.scenarios.filter((s) => !notApplicable.includes(s));
 
     hu.scenarios = included;
     hu.notApplicableScenarios = notApplicable;
     hu.totalScenarios = included.length;
     hu.passedScenarios = included.filter((s) => isOutcome(s, 'exit', 'pass')).length;
 
-    // 6. Generar informe Word institucional
-    const docPath = await WordEngine.generateDocument(hu, metadata, outputDir);
+    // 6. Determinar o crear la carpeta específica de la HU en el almacenamiento
+    const targetHuFolder = resolveHuFolder(baseOutputDir, hu.id, hu.name);
 
-    // 7. Cerrar navegador
+    // 7. Generar informe Word institucional dentro de la carpeta de la HU
+    const docPath = await WordEngine.generateDocument(hu, metadata, targetHuFolder);
+
+    // 8. Cerrar navegador
     await BrowserManager.close();
 
     const duration = Math.round((Date.now() - startTime) / 1000);
     console.log('\n\x1b[32m==============================================================\x1b[0m');
     console.log(`\x1b[1m\x1b[32m  PROCESO COMPLETADO EXITOSAMENTE EN ${duration} SEGUNDOS\x1b[0m`);
     console.log('\x1b[32m==============================================================\x1b[0m');
-    console.log(`\n📄 Archivo generado: \x1b[1m\x1b[36m${docPath}\x1b[0m`);
-    console.log(`📊 Escenarios en el documento: ${hu.totalScenarios} | Aprobados: ${hu.passedScenarios} | No Aplica: ${notApplicable.length}\n`);
+    console.log(`\n📁 Carpeta HU: \x1b[1m\x1b[33m${targetHuFolder}\x1b[0m`);
+    console.log(`📄 Archivo generado: \x1b[1m\x1b[36m${docPath}\x1b[0m`);
+    console.log(`📊 Escenarios en el documento: ${hu.totalScenarios} | Aprobados: ${hu.passedScenarios} | Fallidos: ${failed.length} | No Aplica: ${notApplicable.length}\n`);
 
     if (failed.length > 0) {
-      console.log('\x1b[41m\x1b[1m\x1b[37m ⚠ ALERTA: ESCENARIOS FALLIDOS (NO INCLUIDOS EN EL DOCUMENTO) \x1b[0m');
-      console.log(`\x1b[31mIDs: ${failed.map((s) => s.scenarioId).join(', ')}\x1b[0m\n`);
+      console.log('\x1b[41m\x1b[1m\x1b[37m ⚠ ALERTA: ESCENARIOS FALLIDOS DETECTADOS (INCLUIDOS EN EL DOCUMENTO) \x1b[0m');
+      console.log(`\x1b[31mIDs con fallo: ${failed.map((s) => s.scenarioId).join(', ')}\x1b[0m\n`);
     }
 
   } catch (error: any) {

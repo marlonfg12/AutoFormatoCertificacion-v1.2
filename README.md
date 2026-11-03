@@ -52,3 +52,18 @@ npm start "https://dev.azure.com/interrapidisimo/PL%20-%20Portal%20Clientes/_tes
 ```bash
 npm start -- "<URL de la suite>" --ui
 ```
+
+---
+
+## 4. Almacenamiento Centralizado en Google Drive
+
+Los formatos generados se organizan automáticamente en subcarpetas por Historia de Usuario (HU).
+
+1. **Configuración de ruta compartida:**
+   Crea o edita el archivo `.env` en la raíz del proyecto (puedes tomar como referencia `.env.example`):
+   ```env
+   OUTPUT_PATH="G:\Mi unidad\AutoFormatoCertificacion-v1.2"
+   ```
+   * Si la ruta está disponible, guardará directamente en esa unidad compartida.
+   * Si la unidad de Google Drive no está montada o la ruta no existe, el sistema guardará automáticamente en `./output` local como respaldo seguro sin detener el flujo.
+   * **Organización automática por HU:** Si ya existe una carpeta para la HU (por ejemplo `"Estabilizacion 7"` o `"406158 - ..."`), guarda el documento Word dentro de ella. Si no existe, crea automáticamente la subcarpeta para esa HU.

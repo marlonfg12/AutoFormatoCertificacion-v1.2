@@ -150,9 +150,9 @@ export class AzureApiExtractor {
         continue;
       }
 
-      // No Aplica / Fallida no se incluyen en el documento: no se descargan evidencias
-      if (scenario.outcome === 'No Aplica' || scenario.outcome === 'Fallida') {
-        console.log(`  ℹ Escenario en estado ${scenario.outcome}: no se incluirá en el documento (sin descarga de evidencias).`);
+      // No Aplica no se incluye como tabla en el documento: no se descargan evidencias
+      if (scenario.outcome === 'No Aplica') {
+        console.log(`  ℹ Escenario en estado No Aplica: no se incluirá como tabla en el documento (se lista al final).`);
         scenario.observations = `Estado de ejecución registrado en Azure: ${scenario.outcome}`;
         scenarios.push(scenario);
         continue;
