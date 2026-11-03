@@ -72,10 +72,23 @@ async function main() {
       hu.passedScenarios = scenarios.filter((s) => s.outcome.toLowerCase().includes('exit') || s.outcome.toLowerCase().includes('pass')).length;
     }
 
-    // 5. Generar informe Word institucional
+    // 5. Filtrar escenarios: "No Aplica" y "Fallida" no se incluyen como tablas en el documento.
+    //    Los "No Aplica" se listan en el resumen final; los fallidos solo se alertan en consola.
+    const isOutcome = (s: { outcome: string }, ...values: string[]) =>
+      values.some((v) => s.outcome.toLowerCase().includes(v));
+    const notApplicable = hu.scenarios.filter((s) => isOutcome(s, 'no aplica', 'not applicable'));
+    const failed = hu.scenarios.filter((s) => isOutcome(s, 'fallida', 'failed'));
+    const included = hu.scenarios.filter((s) => !notApplicable.includes(s) && !failed.includes(s));
+
+    hu.scenarios = included;
+    hu.notApplicableScenarios = notApplicable;
+    hu.totalScenarios = included.length;
+    hu.passedScenarios = included.filter((s) => isOutcome(s, 'exit', 'pass')).length;
+
+    // 6. Generar informe Word institucional
     const docPath = await WordEngine.generateDocument(hu, metadata, outputDir);
 
-    // 6. Cerrar navegador
+    // 7. Cerrar navegador
     await BrowserManager.close();
 
     const duration = Math.round((Date.now() - startTime) / 1000);
@@ -83,7 +96,12 @@ async function main() {
     console.log(`\x1b[1m\x1b[32m  PROCESO COMPLETADO EXITOSAMENTE EN ${duration} SEGUNDOS\x1b[0m`);
     console.log('\x1b[32m==============================================================\x1b[0m');
     console.log(`\n📄 Archivo generado: \x1b[1m\x1b[36m${docPath}\x1b[0m`);
-    console.log(`📊 Escenarios: ${hu.totalScenarios} | Aprobados: ${hu.passedScenarios}\n`);
+    console.log(`📊 Escenarios en el documento: ${hu.totalScenarios} | Aprobados: ${hu.passedScenarios} | No Aplica: ${notApplicable.length}\n`);
+
+    if (failed.length > 0) {
+      console.log('\x1b[41m\x1b[1m\x1b[37m ⚠ ALERTA: ESCENARIOS FALLIDOS (NO INCLUIDOS EN EL DOCUMENTO) \x1b[0m');
+      console.log(`\x1b[31mIDs: ${failed.map((s) => s.scenarioId).join(', ')}\x1b[0m\n`);
+    }
 
   } catch (error: any) {
     console.error('\x1b[31m\n[Error Inesperado]\x1b[0m', error.message || error);

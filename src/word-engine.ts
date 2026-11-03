@@ -3,6 +3,7 @@ import path from 'path';
 import AdmZip from 'adm-zip';
 import imageSize from 'image-size';
 import { UserStoryContext, DocumentMetadata } from './types';
+import { isPdfPageImage } from './pdf-renderer';
 
 export class WordEngine {
   private static templatePath = path.resolve(process.cwd(), 'Copia de GTE-ASF-R-01 Resultado de Pruebas V7.docx');
@@ -12,6 +13,9 @@ export class WordEngine {
   private static evidenceCellWidthDxa = 6681 - 108 * 2;
   private static maxImageWidthEmu = this.evidenceCellWidthDxa * 635 - 60000; // ~11.2 cm
   private static maxImageHeightEmu = 3600000; // ~10 cm
+  // Páginas convertidas desde PDF: se permite más altura para que ocupen todo el ancho de la celda
+  // (una página carta a 11.2 cm de ancho mide ~14.5 cm de alto). Sin recortes, proporción intacta.
+  private static maxPdfPageHeightEmu = 5600000; // ~15.5 cm
 
   static async generateDocument(
     hu: UserStoryContext,
@@ -86,7 +90,8 @@ export class WordEngine {
           const relXml = `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${zipMediaName}"/>`;
           relsXml = relsXml.replace('</Relationships>', `${relXml}</Relationships>`);
 
-          // Calcular tamaño proporcional
+          // Calcular tamaño proporcional (las páginas de PDF admiten mayor altura)
+          const maxH = isPdfPageImage(imgPath) ? this.maxPdfPageHeightEmu : this.maxImageHeightEmu;
           let emuW = this.maxImageWidthEmu;
           let emuH = 3000000;
 
@@ -105,8 +110,8 @@ export class WordEngine {
                 emuH = naturalH;
               }
 
-              if (emuH > this.maxImageHeightEmu) {
-                emuH = this.maxImageHeightEmu;
+              if (emuH > maxH) {
+                emuH = maxH;
                 emuW = Math.round(emuH / ratio);
               }
             }
@@ -409,10 +414,24 @@ export class WordEngine {
         const nextEnd = xml.indexOf('</w:tc>', nextStart);
         if (nextStart !== -1 && nextEnd !== -1) {
           const text = `• ${hu.fullName} - ${hu.passedScenarios} de ${hu.totalScenarios} escenarios aprobados.`;
+          const runPr = '<w:rPr><w:rFonts w:ascii="Inter" w:hAnsi="Inter"/><w:sz w:val="18"/></w:rPr>';
+          const runPrBold = '<w:rPr><w:rFonts w:ascii="Inter" w:hAnsi="Inter"/><w:b/><w:sz w:val="18"/></w:rPr>';
+          let paragraphs = `<w:p><w:r>${runPr}<w:t>${this.escapeXml(text)}</w:t></w:r></w:p>`;
+
+          // Escenarios en "No Aplica": se listan aquí (no se incluyen como tabla de evidencias)
+          const notApplicable = hu.notApplicableScenarios || [];
+          if (notApplicable.length > 0) {
+            paragraphs += `<w:p><w:pPr><w:spacing w:before="120"/></w:pPr><w:r>${runPrBold}<w:t>Escenarios que se encuentran en estado No Aplica:</w:t></w:r></w:p>`;
+            for (const s of notApplicable) {
+              const line = `• ${s.scenarioId} : ${s.scenarioTitle} - No Aplica`;
+              paragraphs += `<w:p><w:pPr><w:ind w:left="240"/></w:pPr><w:r>${runPr}<w:t>${this.escapeXml(line)}</w:t></w:r></w:p>`;
+            }
+          }
+
           const cell = `
             <w:tc>
               <w:tcPr><w:tcW w:w="9394" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="FFFFFF"/></w:tcPr>
-              <w:p><w:r><w:rPr><w:rFonts w:ascii="Inter" w:hAnsi="Inter"/><w:sz w:val="18"/></w:rPr><w:t>${this.escapeXml(text)}</w:t></w:r></w:p>
+              ${paragraphs}
             </w:tc>
           `;
           xml = xml.substring(0, nextStart) + cell + xml.substring(nextEnd + 7);

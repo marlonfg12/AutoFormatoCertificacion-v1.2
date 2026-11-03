@@ -154,7 +154,9 @@ export class AzureExtractor {
       // Determinar Outcome
       let outcome = 'Exitosa';
       const lower = text.toLowerCase();
-      if (lower.includes('failed') || lower.includes('fall')) {
+      if (lower.includes('not applicable') || lower.includes('no aplica')) {
+        outcome = 'No Aplica';
+      } else if (lower.includes('failed') || lower.includes('fall')) {
         outcome = 'Fallida';
       } else if (lower.includes('in progress')) {
         outcome = 'En Progreso';
@@ -206,6 +208,13 @@ export class AzureExtractor {
       // Si está en estado Activo, no tiene corrida ejecutada
       if (outcome === 'Activa') {
         console.log(`  ℹ Caso Activo (sin ejecución previa registrada).`);
+        scenarioList.push(scenario);
+        continue;
+      }
+
+      // No Aplica / Fallida no se incluyen en el documento: no se descargan evidencias
+      if (outcome === 'No Aplica' || outcome === 'Fallida') {
+        console.log(`  ℹ Escenario en estado ${outcome}: no se incluirá en el documento (sin descarga de evidencias).`);
         scenarioList.push(scenario);
         continue;
       }

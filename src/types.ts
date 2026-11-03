@@ -13,6 +13,8 @@ export interface UserStoryContext {
   scenarios: ScenarioEvidence[];
   totalScenarios: number;
   passedScenarios: number;
+  /** Escenarios en estado "No Aplica": no se incluyen como tabla, solo se listan en el resumen final. */
+  notApplicableScenarios?: ScenarioEvidence[];
 }
 
 export interface DocumentMetadata {

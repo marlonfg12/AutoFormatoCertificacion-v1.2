@@ -12,6 +12,15 @@ import { pathToFileURL } from 'url';
 
 const RENDER_SCALE = 2;      // ~144 DPI: buena legibilidad al insertarse en Word
 const MAX_PAGES = 40;        // límite de seguridad por documento
+const PDF_PAGE_SUFFIX = /_pagina_\d+\.png$/i;
+
+/**
+ * Indica si una imagen de evidencia fue generada a partir de una página de PDF
+ * (según el nombre que asigna savePdfAsImages).
+ */
+export function isPdfPageImage(filePath: string): boolean {
+  return PDF_PAGE_SUFFIX.test(filePath);
+}
 
 // pdfjs-dist es ESM puro. Este import dinámico evita que TypeScript (module CommonJS)
 // lo transforme en require().
