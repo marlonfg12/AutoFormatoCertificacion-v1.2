@@ -6,7 +6,11 @@ import { UserStoryContext, DocumentMetadata } from './types';
 
 export class WordEngine {
   private static templatePath = path.resolve(process.cwd(), 'Copia de GTE-ASF-R-01 Resultado de Pruebas V7.docx');
-  private static maxImageWidthEmu = 5400000;  // ~15 cm
+  // Ancho útil de la celda de evidencias: columna de 6681 dxa menos márgenes de celda (108 dxa x 2)
+  // del estilo de tabla "aa" de la plantilla. 1 dxa = 635 EMU. Se deja un pequeño margen de seguridad
+  // para que Word nunca recorte la imagen por la derecha.
+  private static evidenceCellWidthDxa = 6681 - 108 * 2;
+  private static maxImageWidthEmu = this.evidenceCellWidthDxa * 635 - 60000; // ~11.2 cm
   private static maxImageHeightEmu = 3600000; // ~10 cm
 
   static async generateDocument(
